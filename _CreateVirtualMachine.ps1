@@ -96,5 +96,3 @@ This example takes an existing sys-prepped, generalized custom operating system 
 This script can be used for automatic provisioning because it uses the local virtual machine admin credentials inline instead of calling Get-Credential which requires user interaction.
 This script assumes that you are already logged into your Azure account. You can confirm your login status by using the Get-AzureSubscription cmdlet.
 #>
-
-#testestestfdf
