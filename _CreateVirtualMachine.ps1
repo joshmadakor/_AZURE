@@ -41,26 +41,26 @@ $VnetAddressPrefix   = "10.0.0.0/16"
 
 #>
 
-$SingleSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name              $SubnetName `          # "MySubnet"
-                                                      -AddressPrefix     $SubnetAddressPrefix   # "10.0.0.0/24"
+$SingleSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name              $SubnetName `          
+                                                      -AddressPrefix     $SubnetAddressPrefix   # "MySubnet"# "10.0.0.0/24"
 
-$Vnet         = New-AzureRmVirtualNetwork             -Name              $NetworkName `         # "MyNet"
-                                                      -ResourceGroupName $ResourceGroupName `   # "RG-01"
-                                                      -Location          $LocationName `        # "westus"
-                                                      -AddressPrefix     $VnetAddressPrefix `   # "10.0.0.0/16"
-                                                      -Subnet            $SingleSubnet          # <Subnet Object>
+$Vnet         = New-AzureRmVirtualNetwork             -Name              $NetworkName `         
+                                                      -ResourceGroupName $ResourceGroupName `   
+                                                      -Location          $LocationName `        
+                                                      -AddressPrefix     $VnetAddressPrefix `   
+                                                      -Subnet            $SingleSubnet          # "MyNet" # "RG-01" # "westus" # "10.0.0.0/16" # <Subnet Object>
 
-$PIP          = New-AzureRmPublicIpAddress            -Name              $PublicIPAddressName ` # "MyPIP"
-                                                      -DomainNameLabel   $DNSNameLabel `        # "mydnsname"
-                                                      -ResourceGroupName $ResourceGroupName `   # "RG-01"
-                                                      -Location          $LocationName `        # "westus"
-                                                      -AllocationMethod  Dynamic
+$PIP          = New-AzureRmPublicIpAddress            -Name              $PublicIPAddressName ` 
+                                                      -DomainNameLabel   $DNSNameLabel `        
+                                                      -ResourceGroupName $ResourceGroupName `   
+                                                      -Location          $LocationName `        
+                                                      -AllocationMethod  Dynamic                # "MyPIP" # "mydnsname" # "RG-01" # "westus"
 
-$NIC          = New-AzureRmNetworkInterface           -Name              $NICName `             # "MyNIC"
-                                                      -ResourceGroupName $ResourceGroupName `   # "RG-01"
-                                                      -Location          $LocationName `        # "westus"
-                                                      -SubnetId          $Vnet.Subnets[0].Id `  # 10.0.0.0/24 (?)
-                                                      -PublicIpAddressId $PIP.Id                # <ip address>
+$NIC          = New-AzureRmNetworkInterface           -Name              $NICName `             
+                                                      -ResourceGroupName $ResourceGroupName `   
+                                                      -Location          $LocationName `        
+                                                      -SubnetId          $Vnet.Subnets[0].Id `  
+                                                      -PublicIpAddressId $PIP.Id                # "MyNIC" # "RG-01" # "westus" # 10.0.0.0/24 (?) # <ip address>
 <#
 $Credential  = New-Object System.Management.Automation.PSCredential ($VMLocalAdminUser, $VMLocalAdminSecurePassword) #>
 $Credential  = Get-Credential
