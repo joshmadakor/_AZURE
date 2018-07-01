@@ -5,7 +5,7 @@ $VMLocalAdminSecurePassword = ConvertTo-SecureString "Password" -AsPlainText -Fo
 
 ## Azure Account
 $LocationName      = "westus"
-$ResourceGroupName = "MyResourceGroup"
+$ResourceGroupName = "RG-01"
 
 # This a Premium_LRS storage account. 
 # It is required in order to run a client VM with efficiency and high performance.
@@ -41,25 +41,27 @@ $VnetAddressPrefix   = "10.0.0.0/16"
 
 #>
 
-$SingleSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name              $SubnetName `          
+New-AzureRmResourceGroup -Name $ResourceGroupName -Location $LocationName
+
+$SingleSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name              $SubnetName `
                                                       -AddressPrefix     $SubnetAddressPrefix   # "MySubnet"# "10.0.0.0/24"
 
-$Vnet         = New-AzureRmVirtualNetwork             -Name              $NetworkName `         
-                                                      -ResourceGroupName $ResourceGroupName `   
-                                                      -Location          $LocationName `        
-                                                      -AddressPrefix     $VnetAddressPrefix `   
+$Vnet         = New-AzureRmVirtualNetwork             -Name              $NetworkName `
+                                                      -ResourceGroupName $ResourceGroupName `
+                                                      -Location          $LocationName `
+                                                      -AddressPrefix     $VnetAddressPrefix `
                                                       -Subnet            $SingleSubnet          # "MyNet" # "RG-01" # "westus" # "10.0.0.0/16" # <Subnet Object>
 
-$PIP          = New-AzureRmPublicIpAddress            -Name              $PublicIPAddressName ` 
-                                                      -DomainNameLabel   $DNSNameLabel `        
-                                                      -ResourceGroupName $ResourceGroupName `   
-                                                      -Location          $LocationName `        
+$PIP          = New-AzureRmPublicIpAddress            -Name              $PublicIPAddressName `
+                                                      -DomainNameLabel   $DNSNameLabel `
+                                                      -ResourceGroupName $ResourceGroupName `
+                                                      -Location          $LocationName `
                                                       -AllocationMethod  Dynamic                # "MyPIP" # "mydnsname" # "RG-01" # "westus"
 
-$NIC          = New-AzureRmNetworkInterface           -Name              $NICName `             
-                                                      -ResourceGroupName $ResourceGroupName `   
-                                                      -Location          $LocationName `        
-                                                      -SubnetId          $Vnet.Subnets[0].Id `  
+$NIC          = New-AzureRmNetworkInterface           -Name              $NICName `
+                                                      -ResourceGroupName $ResourceGroupName `
+                                                      -Location          $LocationName `
+                                                      -SubnetId          $Vnet.Subnets[0].Id `
                                                       -PublicIpAddressId $PIP.Id                # "MyNIC" # "RG-01" # "westus" # 10.0.0.0/24 (?) # <ip address>
 <#
 $Credential  = New-Object System.Management.Automation.PSCredential ($VMLocalAdminUser, $VMLocalAdminSecurePassword) #>
@@ -68,28 +70,28 @@ $Credential  = Get-Credential
 $VirtualMachine = New-AzureRmVMConfig -VMName $VMName `
                                       -VMSize $VMSize 
 
-$VirtualMachine = Set-AzureRmVMOperatingSystem -VM $VirtualMachine ` # <Object>
-                  -ComputerName                    $ComputerName `   # "MyClientVM"
-                  -Credential                      $Credential `     # <manually typed or specified>
+$VirtualMachine = Set-AzureRmVMOperatingSystem -VM $VirtualMachine `
+                  -ComputerName                    $ComputerName `
+                  -Credential                      $Credential `
                   -Windows `
                   -ProvisionVMAgent `
-                  -EnableAutoUpdate
+                  -EnableAutoUpdate                                  # <Object> # "MyClientVM" # <manually typed or specified>
 
-$VirtualMachine = Add-AzureRmVMNetworkInterface -VM $VirtualMachine`
+$VirtualMachine = Add-AzureRmVMNetworkInterface -VM $VirtualMachine `
                                                 -Id $NIC.Id
 
-$VirtualMachine = Set-AzureRmVMOSDisk -VM $VirtualMachine `             # <Object>
-                                      -Name $OSDiskName `               # "MyClient"
-                                      -VhdUri $OSDiskUri `              # "https://Mydisk.blob.core.windows.net/disks/MyOSDisk.vhd"
-                                      -SourceImageUri $SourceImageUri ` # "https://Mydisk.blob.core.windows.net/vhds/MyOSImage.vhd"
-                                      -Caching $OSDiskCaching `         # "ReadWrite"
-                                      -CreateOption $OSCreateOption `   # "FromImage"
-                                      -Windows
-    
-New-AzureRmVM -ResourceGroupName $ResourceGroupName ` # "RG-01"
-              -Location $LocationName `               # "westus"
-              -VM $VirtualMachine `                   # <object>
-              -Verbose
+$VirtualMachine = Set-AzureRmVMOSDisk -VM $VirtualMachine `
+                                      -Name $OSDiskName `
+                                      -VhdUri $OSDiskUri `
+                                      -SourceImageUri $SourceImageUri `
+                                      -Caching $OSDiskCaching `
+                                      -CreateOption $OSCreateOption `
+                                      -Windows # <Object> # "MyClient" # "https://Mydisk.blob.core.windows.net/disks/MyOSDisk.vhd" # "https://Mydisk.blob.core.windows.net/vhds/MyOSImage.vhd" # "ReadWrite" # "FromImage"
+
+New-AzureRmVM -ResourceGroupName $ResourceGroupName `
+              -Location $LocationName `
+              -VM $VirtualMachine `
+              -Verbose # "RG-01" # "westus" # <object>
 
 <#   
 This example takes an existing sys-prepped, generalized custom operating system image and attaches a data disk to it, provisions a new network, deploys the VHD, and runs it.
