@@ -1,102 +1,129 @@
-﻿## VM Account
-# Credentials for Local Admin account you created in the sysprepped (generalized) vhd image
-$VMLocalAdminUser = "LocalAdminUser"
-$VMLocalAdminSecurePassword = ConvertTo-SecureString "Password" -AsPlainText -Force
+﻿<#
+    Below is some useful information for figuring out parameters for object VM provisioning:
 
-## Azure Account
-$LocationName      = "westus"
-$ResourceGroupName = "RG-01"
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+    See List of Locations:
+            Get-AzureRMLocation
+    Example:
+        Get-AzureRMLocation | Select Location
 
-# This a Premium_LRS storage account. 
-# It is required in order to run a client VM with efficiency and high performance.
-$StorageAccount    = "wowhijoshdisklol"
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of Image Publishers:
+        Get-AzureRmVMImagePublisher -Location <location (see above)>
+    Examples:
+        get-AzureRMVMImagePublisher -Location westus | Where PublisherName -like "*MicrosoftWindows*"
+        get-AzureRMVMImagePublisher -Location westus | Where PublisherName -like "*Redhat*"
+
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of Image Offers:
+        Get-AzureRmVMImageOffer -Location <location> -PublisherName <Publisher (see above)>
+    Examples:
+        Get-AzureRmVMImageOffer -Location westus -PublisherName MicrosoftWindowsDesktop
+        Get-AzureRmVMImageOffer -Location westus -PublisherName Redhat
+
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of SKUs
+        Get-AzureRmVMImageSku -Location westus -PublisherName <Publisher)> -Offer <Offer (see above)>
+    Examples:
+        Get-AzureRmVMImageSku -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10
+        Get-AzureRmVMImageSku -Location westus -PublisherName Redhat -Offer RHEL
+
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of Verions (for image)
+        Get-AzureRmVMImage -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10 -Skus <Sku (see above)>
+    Examples:
+        Get-AzureRmVMImage -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10 -Skus rs4-pro | Select Version
+        Get-AzureRmVMImage -Location westus -PublisherName Redhat -Offer RHEL -Skus 7.4 | Select Version
+    Note:
+        You can also just use "latest" when passing in a parameter for the version
     
-## VM
-$OSDiskName     = "MyClient"
-$ComputerName   = "MyClientVM"
-$OSDiskUri      = "https://wowhijoshdisklol.blob.core.windows.net/disks/MyOSDisk.vhd"
-$SourceImageUri = "https://wowhijoshdisklol.blob.core.windows.net/vhds/MyOSImage.vhd"
-$VMName         = "MyVM"
-
-# Modern hardware environment with fast disk, high IOPs performance. 
-# Required to run a client VM with efficiency and performance
-$VMSize         = "Standard_DS3" 
-$OSDiskCaching  = "ReadWrite"
-$OSCreateOption = "FromImage"
-    
-## Networking
-$DNSNameLabel        = "mydnsname" # mydnsname.westus.cloudapp.azure.com
-$NetworkName         = "MyNet"
-$NICName             = "MyNIC"
-$PublicIPAddressName = "MyPIP" 
-$SubnetName          = "MySubnet"
-$SubnetAddressPrefix = "10.0.0.0/24"
-$VnetAddressPrefix   = "10.0.0.0/16"
-
-<#
-1. Create Subnet
-2. Create Virtual Network
-3. Create Private IP address
-4. Create NIC
-
+    ------------------------------------------------------------------------------------------------------------------------------------------------
 #>
 
-New-AzureRmResourceGroup  -Name $ResourceGroupName -Location $LocationName
-New-AzureRmStorageAccount -ResourceGroupName RG-01 -Name $StorageAccount -Location westus
+#The following code is assuming 'Import-Module AzureRM' has been run
+Connect-AzureRmAccount
 
+Function create_Resource_Group($resourceGroupName, $resourceGroupLocation) {
+    Write-Host Creating Resource Group: `n $resourceGroupName `n $resourceGroupLocation -ForegroundColor Gray
+    New-AzureRmResourceGroup -Name $resourceGroupName -Location $resourceGroupLocation -Force
+}
 
-$SingleSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name              $SubnetName `
-                                                      -AddressPrefix     $SubnetAddressPrefix   # "MySubnet"# "10.0.0.0/24"
+Function create_VM_Subnet($subnetName, $addressPrefix) {
+    Write-Host Creating Virtual Subnet: `n $subnetName `n $addressPrefix -ForegroundColor Gray
+    return New-AzureRmVirtualNetworkSubnetConfig -Name $subnetName -AddressPrefix $addressPrefix
+}
 
-$Vnet         = New-AzureRmVirtualNetwork             -Name              $NetworkName `
-                                                      -ResourceGroupName $ResourceGroupName `
-                                                      -Location          $LocationName `
-                                                      -AddressPrefix     $VnetAddressPrefix `
-                                                      -Subnet            $SingleSubnet          # "MyNet" # "RG-01" # "westus" # "10.0.0.0/16" # <Subnet Object>
+Function create_VM_Virtual_Network($resourceGroupName, $VirtualNetworkLocation, $virtualNetworkName, $addressPrefix, $subnetName, $subnetPrefix) {
+   Write-Host Creating Virtual Network: `n $virtualNetworkName `n $addressPrefix -ForegroundColor Gray
+   return New-AzureRmVirtualNetwork -ResourceGroupName $resourceGroupName `
+                                    -AddressPrefix     $addressPrefix `
+                                    -Location          $VirtualNetworkLocation `
+                                    -Subnet            (create_VM_Subnet $subnetName $subnetPrefix) `
+                                    -Name              $virtualNetworkName `
+                                    -Force
+}
 
-$PIP          = New-AzureRmPublicIpAddress            -Name              $PublicIPAddressName `
-                                                      -DomainNameLabel   $DNSNameLabel `
-                                                      -ResourceGroupName $ResourceGroupName `
-                                                      -Location          $LocationName `
-                                                      -AllocationMethod  Dynamic                # "MyPIP" # "mydnsname" # "RG-01" # "westus"
+Function create_VM_Public_IP_Address($resourceGroupName, $publicIPLocation) {
+    Write-Host Creating Public IP Address... -ForegroundColor Gray
+    return New-AzureRmPublicIpAddress -ResourceGroupName $resourceGroupName `
+                                      -Location $publicIPLocation `
+                                      -Name "mypublicdns$(Get-Random)" `
+                                      -AllocationMethod Static `
+                                      -IdleTimeoutInMinutes 4
+}
 
-$NIC          = New-AzureRmNetworkInterface           -Name              $NICName `
-                                                      -ResourceGroupName $ResourceGroupName `
-                                                      -Location          $LocationName `
-                                                      -SubnetId          $Vnet.Subnets[0].Id `
-                                                      -PublicIpAddressId $PIP.Id                # "MyNIC" # "RG-01" # "westus" # 10.0.0.0/24 (?) # <ip address>
-<#
-$Credential  = New-Object System.Management.Automation.PSCredential ($VMLocalAdminUser, $VMLocalAdminSecurePassword) #>
-$Credential  = Get-Credential
+Function create_NetworkSecurityGroup_RDP() {
+    Write-Host Creating RDP Network Security Group: `n Port 3389 -ForegroundColor Gray
+    $nsgRuleRDP = New-AzureRmNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  `
+                                                       -Protocol Tcp `
+                                                       -Direction Inbound `
+                                                       -Priority 1000 `
+                                                       -SourceAddressPrefix * `
+                                                       -SourcePortRange * `
+                                                       -DestinationAddressPrefix * `
+                                                       -DestinationPortRange 3389 `
+                                                       -Access Allow
+    return New-AzureRmNetworkSecurityGroup             -ResourceGroupName $resourceGroup `
+                                                       -Location $location `
+                                                       -Name myNetworkSecurityGroup `
+                                                       -SecurityRules $nsgRuleRDP `
+                                                       -Force
+}
 
-$VirtualMachine = New-AzureRmVMConfig -VMName $VMName `
-                                      -VMSize $VMSize 
+Function create_VM_NIC($resourceGroupName, $nicLocation, $nicName) {
+    Write-Host Creating Virtual NIC: `n $nicName -ForegroundColor Gray
+    return New-AzureRmNetworkInterface -Name $nicName `
+                                       -ResourceGroupName $resourceGroupName `
+                                       -Location $nicLocation `
+                                       -SubnetId $virtualNetwork.Subnets[0].Id `
+                                       -PublicIpAddressId $privateIPAddr.Id `
+                                       -NetworkSecurityGroupId $networkSecurityGroup.Id `
+                                       -Force
+}
 
-$VirtualMachine = Set-AzureRmVMOperatingSystem -VM $VirtualMachine `
-                  -ComputerName                    $ComputerName `
-                  -Credential                      $Credential `
-                  -Windows `
-                  -ProvisionVMAgent `
-                  -EnableAutoUpdate                                  # <Object> # "MyClientVM" # <manually typed or specified>
+Function create_VM($vmResourceGroup, $vmLocation, $vmName, $vmSize, $credentials, $publisherName, $offer, $sku, $version, $nic) {
+    Write-Host Creating Virtual Machine: `n $vmName `n $vmSize `n $offer`n $sku`n $version -ForegroundColor Gray
+    $vmConfig = New-AzureRmVMConfig -VMName $vmName -VMSize $vmSize
+    $vmConfig = Set-AzureRmVMOperatingSystem -Windows -ComputerName $vmName -Credential $credentials -VM $vmConfig
+    $vmConfig = Set-AzureRmVMSourceImage -PublisherName $publisherName -Offer $offer -Skus $sku -Version $version -VM $vmConfig
+    $vmConfig = Add-AzureRmVMNetworkInterface -Id $nic.Id -VM $vmConfig
+    New-AzureRmVM -ResourceGroupName $vmResourceGroup -Location $vmLocation -VM $vmConfig
+}
 
-$VirtualMachine = Add-AzureRmVMNetworkInterface -VM $VirtualMachine `
-                                                -Id $NIC.Id
+$vmName         = "myNewServer"
+$resourceGroup  = "RG-02"
+$location       = "westus"
 
-$VirtualMachine = Set-AzureRmVMOSDisk -VM $VirtualMachine `
-                                      -Name $OSDiskName `
-                                      -VhdUri $OSDiskUri `
-                                      -SourceImageUri $SourceImageUri `
-                                      -Caching $OSDiskCaching `
-                                      -CreateOption $OSCreateOption `
-                                      -Windows # <Object> # "MyClient" # "https://Mydisk.blob.core.windows.net/disks/MyOSDisk.vhd" # "https://Mydisk.blob.core.windows.net/vhds/MyOSImage.vhd" # "ReadWrite" # "FromImage"
+create_Resource_Group $resourceGroup $location
 
-New-AzureRmVM -ResourceGroupName $ResourceGroupName `
-              -Location $LocationName `
-              -VM $VirtualMachine `
-              -Verbose # "RG-01" # "westus" # <object>
+$credentials    = Get-Credential -Message "Enter a username and password for the virtual machine."
+$virtualNetwork = create_VM_Virtual_Network $resourceGroup $location "MyVirtualNetwork" 10.0.0.0/16 "MyVirtualSubnet" 10.0.0.0/24
+$virtualNIC     = create_VM_NIC $resourceGroup $location "MyVirtualNIC"
+$netSecGroup    = create_NetworkSecurityGroup_RDP
+$privateIPAddr  = create_VM_Public_IP_Address $resourceGroup $location
 
-<#   
-This example takes an existing sys-prepped, generalized custom operating system image and attaches a data disk to it, provisions a new network, deploys the VHD, and runs it.
-This script can be used for automatic provisioning because it uses the local virtual machine admin credentials inline instead of calling Get-Credential which requires user interaction.
-This script assumes that you are already logged into your Azure account. You can confirm your login status by using the Get-AzureSubscription cmdlet.
-#>
+create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWindowsServer WindowsServer 2016-DataCenter latest $virtualNIC
