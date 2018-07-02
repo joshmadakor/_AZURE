@@ -9,13 +9,13 @@ $ResourceGroupName = "RG-01"
 
 # This a Premium_LRS storage account. 
 # It is required in order to run a client VM with efficiency and high performance.
-$StorageAccount    = "Mydisk"
+$StorageAccount    = "wowhijoshdisklol"
     
 ## VM
 $OSDiskName     = "MyClient"
 $ComputerName   = "MyClientVM"
-$OSDiskUri      = "https://Mydisk.blob.core.windows.net/disks/MyOSDisk.vhd"
-$SourceImageUri = "https://Mydisk.blob.core.windows.net/vhds/MyOSImage.vhd"
+$OSDiskUri      = "https://wowhijoshdisklol.blob.core.windows.net/disks/MyOSDisk.vhd"
+$SourceImageUri = "https://wowhijoshdisklol.blob.core.windows.net/vhds/MyOSImage.vhd"
 $VMName         = "MyVM"
 
 # Modern hardware environment with fast disk, high IOPs performance. 
@@ -41,7 +41,9 @@ $VnetAddressPrefix   = "10.0.0.0/16"
 
 #>
 
-New-AzureRmResourceGroup -Name $ResourceGroupName -Location $LocationName
+New-AzureRmResourceGroup  -Name $ResourceGroupName -Location $LocationName
+New-AzureRmStorageAccount -ResourceGroupName RG-01 -Name $StorageAccount -Location westus
+
 
 $SingleSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name              $SubnetName `
                                                       -AddressPrefix     $SubnetAddressPrefix   # "MySubnet"# "10.0.0.0/24"
