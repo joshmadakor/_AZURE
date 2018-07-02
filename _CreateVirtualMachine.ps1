@@ -1,49 +1,4 @@
-﻿<#
-    Below is some useful information for figuring out parameters for object VM provisioning:
-
-    ------------------------------------------------------------------------------------------------------------------------------------------------
-    See List of Locations:
-            Get-AzureRMLocation
-    Example:
-        Get-AzureRMLocation | Select Location
-
-    ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    See List of Image Publishers:
-        Get-AzureRmVMImagePublisher -Location <location (see above)>
-    Examples:
-        get-AzureRMVMImagePublisher -Location westus | Where PublisherName -like "*MicrosoftWindows*"
-        get-AzureRMVMImagePublisher -Location westus | Where PublisherName -like "*Redhat*"
-
-    ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    See List of Image Offers:
-        Get-AzureRmVMImageOffer -Location <location> -PublisherName <Publisher (see above)>
-    Examples:
-        Get-AzureRmVMImageOffer -Location westus -PublisherName MicrosoftWindowsDesktop
-        Get-AzureRmVMImageOffer -Location westus -PublisherName Redhat
-
-    ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    See List of SKUs
-        Get-AzureRmVMImageSku -Location westus -PublisherName <Publisher)> -Offer <Offer (see above)>
-    Examples:
-        Get-AzureRmVMImageSku -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10
-        Get-AzureRmVMImageSku -Location westus -PublisherName Redhat -Offer RHEL
-
-    ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    See List of Verions (for image)
-        Get-AzureRmVMImage -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10 -Skus <Sku (see above)>
-    Examples:
-        Get-AzureRmVMImage -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10 -Skus rs4-pro | Select Version
-        Get-AzureRmVMImage -Location westus -PublisherName Redhat -Offer RHEL -Skus 7.4 | Select Version
-    Note:
-        You can also just use "latest" when passing in a parameter for the version
-    
-    ------------------------------------------------------------------------------------------------------------------------------------------------
-#>
-
+﻿#See the very end for useful information for figuring out parameters for object VM provisioning
 #The following code is assuming 'Import-Module AzureRM' has been run
 Connect-AzureRmAccount
 
@@ -127,3 +82,48 @@ $netSecGroup    = create_NetworkSecurityGroup_RDP
 $privateIPAddr  = create_VM_Public_IP_Address $resourceGroup $location
 
 create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWindowsServer WindowsServer 2016-DataCenter latest $virtualNIC
+
+<#
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of Locations:
+            Get-AzureRMLocation
+    Example:
+        Get-AzureRMLocation | Select Location
+
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of Image Publishers:
+        Get-AzureRmVMImagePublisher -Location <location (see above)>
+    Examples:
+        get-AzureRMVMImagePublisher -Location westus | Where PublisherName -like "*MicrosoftWindows*"
+        get-AzureRMVMImagePublisher -Location westus | Where PublisherName -like "*Redhat*"
+
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of Image Offers:
+        Get-AzureRmVMImageOffer -Location <location> -PublisherName <Publisher (see above)>
+    Examples:
+        Get-AzureRmVMImageOffer -Location westus -PublisherName MicrosoftWindowsDesktop
+        Get-AzureRmVMImageOffer -Location westus -PublisherName Redhat
+
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of SKUs
+        Get-AzureRmVMImageSku -Location westus -PublisherName <Publisher)> -Offer <Offer (see above)>
+    Examples:
+        Get-AzureRmVMImageSku -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10
+        Get-AzureRmVMImageSku -Location westus -PublisherName Redhat -Offer RHEL
+
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    See List of Verions (for image)
+        Get-AzureRmVMImage -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10 -Skus <Sku (see above)>
+    Examples:
+        Get-AzureRmVMImage -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10 -Skus rs4-pro | Select Version
+        Get-AzureRmVMImage -Location westus -PublisherName Redhat -Offer RHEL -Skus 7.4 | Select Version
+    Note:
+        You can also just use "latest" when passing in a parameter for the version
+    
+    ------------------------------------------------------------------------------------------------------------------------------------------------
+#>
