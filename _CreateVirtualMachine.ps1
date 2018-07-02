@@ -27,8 +27,7 @@ Function create_VM_Public_IP_Address($resourceGroupName, $publicIPLocation) {
     return New-AzureRmPublicIpAddress -ResourceGroupName $resourceGroupName `
                                       -Location $publicIPLocation `
                                       -Name "mypublicdns$(Get-Random)" `
-                                      -AllocationMethod Static `
-                                      -IdleTimeoutInMinutes 4
+                                      -AllocationMethod Dynamic
 }
 
 Function create_NetworkSecurityGroup_RDP() {
@@ -49,13 +48,13 @@ Function create_NetworkSecurityGroup_RDP() {
                                                        -Force
 }
 
-Function create_VM_NIC($resourceGroupName, $nicLocation, $nicName) {
+Function create_VM_NIC($resourceGroupName, $nicLocation, $nicName, $nicPublicIPAddress) {
     Write-Host Creating Virtual NIC: `n $nicName -ForegroundColor Gray
     return New-AzureRmNetworkInterface -Name $nicName `
                                        -ResourceGroupName $resourceGroupName `
                                        -Location $nicLocation `
                                        -SubnetId $virtualNetwork.Subnets[0].Id `
-                                       -PublicIpAddressId $privateIPAddr.Id `
+                                       -PublicIpAddressId $nicPublicIPAddress.Id `
                                        -NetworkSecurityGroupId $networkSecurityGroup.Id `
                                        -Force
 }
@@ -70,16 +69,16 @@ Function create_VM($vmResourceGroup, $vmLocation, $vmName, $vmSize, $credentials
 }
 
 $vmName         = "myNewServer"
-$resourceGroup  = "RG-02"
+$resourceGroup  = "RG-07"
 $location       = "westus"
 
 create_Resource_Group $resourceGroup $location
 
-$credentials    = Get-Credential -Message "Enter a username and password for the virtual machine."
-$virtualNetwork = create_VM_Virtual_Network $resourceGroup $location "MyVirtualNetwork" 10.0.0.0/16 "MyVirtualSubnet" 10.0.0.0/24
-$virtualNIC     = create_VM_NIC $resourceGroup $location "MyVirtualNIC"
-$netSecGroup    = create_NetworkSecurityGroup_RDP
-$privateIPAddr  = create_VM_Public_IP_Address $resourceGroup $location
+$credentials     = Get-Credential -Message "Enter a username and password for the virtual machine."
+$nicPublicIPAddr = create_VM_Public_IP_Address $resourceGroup $location
+$virtualNetwork  = create_VM_Virtual_Network $resourceGroup $location "MyVirtualNetwork" 10.0.0.0/16 "MyVirtualSubnet" 10.0.0.0/24
+$virtualNIC      = create_VM_NIC $resourceGroup $location "MyVirtualNIC" $nicPublicIPAddr
+$netSecGroup     = create_NetworkSecurityGroup_RDP
 
 create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWindowsServer WindowsServer 2016-DataCenter latest $virtualNIC
 
