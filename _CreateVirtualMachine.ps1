@@ -48,7 +48,7 @@ Function create_NetworkSecurityGroup_RDP() {
                                                        -Force
 }
 
-Function create_VM_NIC($resourceGroupName, $nicLocation, $nicName, $nicPublicIPAddress) {
+Function create_VM_NIC($resourceGroupName, $nicLocation, $nicName, $nicPublicIPAddress, $networkSecurityGroup) {
     Write-Host Creating Virtual NIC: `n $nicName -ForegroundColor Gray
     return New-AzureRmNetworkInterface -Name $nicName `
                                        -ResourceGroupName $resourceGroupName `
@@ -77,20 +77,20 @@ create_Resource_Group $resourceGroup $location
 $credentials     = Get-Credential -Message "Enter a username and password for the virtual machine."
 $nicPublicIPAddr = create_VM_Public_IP_Address $resourceGroup $location
 $virtualNetwork  = create_VM_Virtual_Network $resourceGroup $location "MyVirtualNetwork" 10.0.0.0/16 "MyVirtualSubnet" 10.0.0.0/24
-$virtualNIC      = create_VM_NIC $resourceGroup $location "MyVirtualNIC" $nicPublicIPAddr
 $netSecGroup     = create_NetworkSecurityGroup_RDP
+$virtualNIC      = create_VM_NIC $resourceGroup $location "MyVirtualNIC" $nicPublicIPAddr $netSecGroup
 
 create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWindowsServer WindowsServer 2016-DataCenter latest $virtualNIC
 
 <#
-    ------------------------------------------------------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------
 
     See List of Locations:
             Get-AzureRMLocation
     Example:
         Get-AzureRMLocation | Select Location
 
-    ------------------------------------------------------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------
 
     See List of Image Publishers:
         Get-AzureRmVMImagePublisher -Location <location (see above)>
@@ -98,7 +98,7 @@ create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWin
         get-AzureRMVMImagePublisher -Location westus | Where PublisherName -like "*MicrosoftWindows*"
         get-AzureRMVMImagePublisher -Location westus | Where PublisherName -like "*Redhat*"
 
-    ------------------------------------------------------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------
 
     See List of Image Offers:
         Get-AzureRmVMImageOffer -Location <location> -PublisherName <Publisher (see above)>
@@ -106,7 +106,7 @@ create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWin
         Get-AzureRmVMImageOffer -Location westus -PublisherName MicrosoftWindowsDesktop
         Get-AzureRmVMImageOffer -Location westus -PublisherName Redhat
 
-    ------------------------------------------------------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------
 
     See List of SKUs
         Get-AzureRmVMImageSku -Location westus -PublisherName <Publisher)> -Offer <Offer (see above)>
@@ -114,7 +114,7 @@ create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWin
         Get-AzureRmVMImageSku -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10
         Get-AzureRmVMImageSku -Location westus -PublisherName Redhat -Offer RHEL
 
-    ------------------------------------------------------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------
 
     See List of Verions (for image)
         Get-AzureRmVMImage -Location westus -PublisherName MicrosoftWindowsDesktop -Offer Windows-10 -Skus <Sku (see above)>
@@ -124,5 +124,5 @@ create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWin
     Note:
         You can also just use "latest" when passing in a parameter for the version
     
-    ------------------------------------------------------------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------
 #>
