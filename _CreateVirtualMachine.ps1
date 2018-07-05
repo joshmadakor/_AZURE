@@ -68,9 +68,10 @@ Function create_VM($vmResourceGroup, $vmLocation, $vmName, $vmSize, $credentials
     New-AzureRmVM -ResourceGroupName $vmResourceGroup -Location $vmLocation -VM $vmConfig
 }
 
-$vmName         = "myNewServer"
-$resourceGroup  = "RG-10"
-$location       = "westus"
+$vmName         = "myFastVM1"
+$resourceGroup  = "RG-01"        # See all with Get-AzureRmResourceGroup
+$location       = "westus"       # See all with Get-AzureRmLocation
+$vmSize         = "Standard_DS2" # See all with Get-AzureRmVMSize -Location westus
 
 create_Resource_Group $resourceGroup $location
 
@@ -78,9 +79,9 @@ $credentials     = Get-Credential -Message "Enter a username and password for th
 $nicPublicIPAddr = create_VM_Public_IP_Address $resourceGroup $location
 $virtualNetwork  = create_VM_Virtual_Network $resourceGroup $location "MyVirtualNetwork" 10.0.0.0/16 "MyVirtualSubnet" 10.0.0.0/24
 $netSecGroup     = create_NetworkSecurityGroup_RDP
-$virtualNIC      = create_VM_NIC $resourceGroup $location "MyVirtualNIC" $nicPublicIPAddr $netSecGroup
+$virtualNIC      = create_VM_NIC $resourceGroup $location "MyVirtualNIC2" $nicPublicIPAddr $netSecGroup
 
-create_VM $resourceGroup $location $vmName Standard_D1 $credentials MicrosoftWindowsServer WindowsServer 2016-DataCenter latest $virtualNIC
+create_VM $resourceGroup $location $vmName $vmSize $credentials MicrosoftWindowsServer WindowsServer 2016-DataCenter latest $virtualNIC
 
 <#
     -----------------------------------------------------------------------------------------------------------------
