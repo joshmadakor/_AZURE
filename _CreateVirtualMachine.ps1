@@ -69,7 +69,7 @@ Function create_VM($vmResourceGroup, $vmLocation, $vmName, $vmSize, $credentials
 }
 
 $vmName         = "myNewServer"
-$resourceGroup  = "RG-07"
+$resourceGroup  = "RG-10"
 $location       = "westus"
 
 create_Resource_Group $resourceGroup $location
