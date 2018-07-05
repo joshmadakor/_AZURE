@@ -42,4 +42,5 @@ $vm                   = Add-AzureRmVMDataDisk -VM                $vm `
                                               -Lun               $attachment_LUN `
                                               -Verbose
 
+#--- Commit Changes to VM ---#
 Update-AzureRMVM -VM $vm -ResourceGroupName $vm_resourceGroup
