@@ -15,7 +15,7 @@ $diskConfig           = New-AzureRMDiskConfig -SkuName           $diskConfig_Sku
 
 #--- Disk Variables ---#
 $disk_resourceGroup   = "RG-10"
-$disk_name            = "penisholestickysticky1"
+$disk_name            = "myNewStorageName"
 $disk                 = New-AzureRMDisk       -ResourceGroupName $disk_resourceGroup `
                                               -DiskName          $disk_name `
                                               -Disk              $diskConfig `
